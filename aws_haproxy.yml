@@ -1,0 +1,45 @@
+- hosts: load_balancer
+  vars: 
+  - port: 8080
+
+  tasks:
+  - name: "Installing HAProxy...."
+    package:
+       name: "haproxy"
+
+  - name: "Configuration file of HAProxy...."
+    template:
+       src: "/root/ansible-ws/haproxy.cfg.j2"
+       dest: "/etc/haproxy/haproxy.cfg"
+    register: x
+
+  - name: "Starting service....."
+    service:
+       name: "haproxy"
+       state: started
+
+  - name: "Restarting HAProxy service changes done in conf file..."
+    service: 
+       name: "haproxy"
+       state: restarted   
+    when: x.failed == true
+
+- hosts: backend_server
+  tasks:
+  - name: "Installing httpd...."
+    package:
+       name: "httpd"
+       
+  - name: "Starting httpd service...."
+    service:
+       name: "httpd"
+       state: started  
+
+  - name: "Installing PHP...."
+    package: 
+       name: "php"
+
+  - name: "Copying Content...."
+    copy:
+       src: "/root/ansible-ws/first.php"
+       dest: "/var/www/html/"
